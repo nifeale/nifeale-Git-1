@@ -32,6 +32,8 @@ jobs:
           port: 22
           script: |
             set -e
+            sudo apt-get update
+            sudo apt-get install -y python3-venv git
             if [ ! -d "/home/ubuntu/flaskapp" ]; then
               git clone https://github.com/nifeale/nifeale-Git-1.git /home/ubuntu/flaskapp
             else
