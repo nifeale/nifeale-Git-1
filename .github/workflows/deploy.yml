@@ -1,0 +1,38 @@
+name: Deploy Flask App to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            # Navigate to the application directory
+            cd /home/ubuntu/app
+
+            # Stop the Gunicorn service to prevent file lock issues
+            sudo systemctl stop flaskapp
+
+            # Use rsync to synchronize local files with the remote server
+            rsync -av --delete . /home/ubuntu/app/
+
+            # Restart the Gunicorn service
+            sudo systemctl start flaskapp
+
+            # Copy and set up the Nginx configuration
+            sudo cp /home/ubuntu/app/nginx-conf/flaskapp.conf /etc/nginx/sites-available/
+            sudo ln -s /etc/nginx/sites-available/flaskapp.conf /etc/nginx/sites-enabled/flaskapp.conf || true
+            sudo systemctl restart nginx
