@@ -31,11 +31,16 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           port: 22
           script: |
-            mkdir -p /home/ubuntu/flaskapp
+            set -e
+            if [ ! -d "/home/ubuntu/flaskapp" ]; then
+              git clone https://github.com/nifeale/nifeale-Git-1.git /home/ubuntu/flaskapp
+            else
+              cd /home/ubuntu/flaskapp
+              git pull origin main
+            fi
             cd /home/ubuntu/flaskapp
-            git init
-            git remote add origin https://github.com/nifeale/nifeale-Git-1.git
-            git fetch
-            git reset --hard origin/main
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install --upgrade pip flask gunicorn
             pkill gunicorn || echo "No existing gunicorn process found"
-            sudo nohup gunicorn --bind 0.0.0.0:80 app:app &
+            nohup venv/bin/gunicorn --bind 0.0.0.0:8000 app:app &
